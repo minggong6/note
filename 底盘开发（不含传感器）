@@ -1,0 +1,201 @@
+#include <PS2X_lib.h>
+#include <AFMotor.h>
+
+//根据motor的编号接轮子
+#define right_forward_wheel 1
+#define right_backward_wheel 2
+#define left_forward_wheel 3
+#define left_backward_wheel 4
+
+AF_DCMotor motor1(right_forward_wheel);
+AF_DCMotor motor2(right_backward_wheel);
+AF_DCMotor motor3(left_forward_wheel);
+AF_DCMotor motor4(left_backward_wheel);
+
+//#define serial Serial
+
+PS2X ps2x;
+
+void control_motor(int name, int speed);
+void go_forward(void);
+void go_backward(void);
+void go_left(void);
+void go_right(void);
+void turn_left(void);
+void turn_right(void);
+
+int speed1 = 120, speed2 = -90;
+
+void setup() {
+  Serial.begin(9600);
+  Serial.println("begin!");
+
+  ps2x.config_gamepad(A2, 24, A3, 22, true, true);  //初始化手柄
+  //格式（clk，cmd，sel，dat）最后两个具体是啥忘了，反正true总没错，根据手柄接收器的引脚改代码
+  Serial.println("connected!");
+  delay(300);
+}
+
+void loop() {
+  ps2x.read_gamepad(false, 0);
+  delay(30);
+
+
+  if ((ps2x.Analog(PSS_LY)) < 30 || (ps2x.ButtonPressed(PSB_PAD_UP)) == 1) {
+    go_forward();
+  }
+  //举例说明
+  //左摇杆y大于230，即向下拉左摇杆
+  //或者下箭头被按下
+  //调用后退函数
+  else if ((ps2x.Analog(PSS_LY)) > 230 || (ps2x.ButtonPressed(PSB_PAD_DOWN)) == 1) {
+    go_backward();
+  } else if ((ps2x.ButtonPressed(PSB_PAD_LEFT)) == 1) {
+    turn_left();
+  } else if ((ps2x.ButtonPressed(PSB_PAD_RIGHT)) == 1) {
+    turn_right();
+  } else if ((ps2x.Analog(PSS_LX)) < 30) {
+    go_left();
+  } else if ((ps2x.Analog(PSS_LX)) > 230) {
+    go_right();
+  }
+
+  else {
+    stop();
+  }
+}
+
+void control_motor(int name, int speed) {
+  if (name == 1) {
+    Serial.print("right_forward_wheel: ");
+    Serial.println(speed);
+    if (speed > 0) {
+      speed = speed > 255 ? 255 : speed;
+      motor1.run(FORWARD);
+      motor1.setSpeed(speed);
+    } else if (speed == 0) {
+      motor1.run(RELEASE);
+    } else {
+      speed = -speed;
+      speed = speed > 255 ? 255 : speed;
+      motor1.run(BACKWARD);
+      motor1.setSpeed(speed);
+    }
+
+
+  } else if (name == 2) {
+    Serial.print("right_backward_wheel: ");
+    Serial.println(speed);
+    if (speed > 0) {
+      speed = speed > 255 ? 255 : speed;
+      motor2.run(FORWARD);
+      motor2.setSpeed(speed);
+    } else if (speed == 0) {
+      motor2.run(RELEASE);
+    } else {
+      speed = -speed;
+      speed = speed > 255 ? 255 : speed;
+      motor2.run(BACKWARD);
+      motor2.setSpeed(speed);
+    }
+
+  } else if (name == 3) {
+    Serial.print("left_forward_wheel: ");
+    Serial.println(speed);
+    if (speed > 0) {
+      speed = speed > 255 ? 255 : speed;
+      motor3.run(FORWARD);
+      motor3.setSpeed(speed);
+    } else if (speed == 0) {
+      motor3.run(RELEASE);
+    } else {
+      speed = -speed;
+      speed = speed > 255 ? 255 : speed;
+      motor3.run(BACKWARD);
+      motor3.setSpeed(speed);
+    }
+
+
+  } else if (name == 4) {
+    Serial.print("letf_backward_wheel: ");
+    Serial.println(speed);
+    if (speed > 0) {
+      speed = speed > 255 ? 255 : speed;
+      motor4.run(FORWARD);
+      motor4.setSpeed(speed);
+    } else if (speed == 0) {
+      motor4.run(RELEASE);
+    } else {
+      speed = -speed;
+      speed = speed > 255 ? 255 : speed;
+      motor4.run(BACKWARD);
+      motor4.setSpeed(speed);
+    }
+  }
+}
+
+void go_forward(void) {
+  Serial.println("go_forward");
+  // 右1电机
+  control_motor(right_forward_wheel, -90);
+  // 右2电机……
+  control_motor(right_backward_wheel, -90);
+  // 左1电机
+  control_motor(left_forward_wheel, -90);
+  // 左2电机
+  control_motor(left_backward_wheel, -90);
+}
+
+void go_backward(void) {
+  Serial.println("go_backward");
+  control_motor(right_forward_wheel, 120);
+  control_motor(right_backward_wheel, 120);
+  control_motor(left_forward_wheel, 120);
+  control_motor(left_backward_wheel, 120);
+}
+
+void turn_left(void) {
+  Serial.println("turn_left");
+  control_motor(right_forward_wheel, 120);
+  control_motor(right_backward_wheel, 120);
+  control_motor(left_forward_wheel, -90);
+  control_motor(left_backward_wheel, -90);
+}
+
+void turn_right(void) {
+  Serial.println("turn_right");
+  control_motor(right_forward_wheel, -90);
+  control_motor(right_backward_wheel, -90);
+  control_motor(left_forward_wheel, 120);
+  control_motor(left_backward_wheel, 120);
+}
+
+void go_left(void) {
+  Serial.println("go_left");
+  control_motor(right_forward_wheel, -90);
+  control_motor(right_backward_wheel, 120);
+  control_motor(left_forward_wheel, 120);
+  control_motor(left_backward_wheel, -90);
+}
+
+void go_right(void) {
+  Serial.println("go_right");
+  control_motor(right_forward_wheel, 120);
+  control_motor(right_backward_wheel, -90);
+  control_motor(left_forward_wheel, -90);
+  control_motor(left_backward_wheel, 120);
+}
+
+void stop(void) {
+  Serial.println("stop");
+  control_motor(right_forward_wheel, 0);
+  control_motor(right_backward_wheel, 0);
+  control_motor(left_forward_wheel, 0);
+  control_motor(left_backward_wheel, 0);
+}
+
+/*我目前总结的l293d的接线
+3~7,8,11,12，对应接mega的pwm对应编号
+左侧最上面接reset
+5v接arduino的5v（主要目的是给arduino供电，如果有其他供电方案可以不接）
+其他都不用接*/
